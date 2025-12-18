@@ -12,40 +12,40 @@ core philosophy.
 
 ## Database Strategy
 
-- **SQLite (LibSQL)**
+- **Per-World SQLite (Turso Namespaces / D1)**
   - **Pros (Synergy):**
-    - **Edge-Native:** Negligible cold-start (in-process/HTTP2).
-    - **Portability:** Single-file database aligns with "Malleable Knowledge".
+    - **Isolation:** Each world is its own physical database file. "Detaching" a
+      world is as simple as copying the file.
+    - **Performance:** Write locks and FTS indexing are scoped to a single
+      world, preventing "noisy neighbor" latency.
+    - **Schema:** Migrations can be rolled out incrementally.
   - **Cons (Trade-offs):**
-    - **Concurrency:** Lower write throughput than Postgres.
-    - **Scale:** Requires careful replication management for high availability.
+    - **Management:** Requires a "Control Plane" database to map `world_id` to
+      database connection strings/paths.
+    - **Connections:** Managing thousands of DB connections requires careful
+      pooling or HTTP-based query protocols.
 
-- **PostgreSQL + pgvector**
+- **Monolithic SQLite**
   - **Pros (Synergy):**
-    - **Standard:** Robust ecosystem and tooling.
-    - **Power:** Industry leader for complex vector workloads.
+    - **Simplicity:** One file to back up, one schema to manage.
   - **Cons (Trade-offs):**
-    - **Heaviness:** Connection pools are expensive for ephemeral edge
-      functions.
-    - **Complexity:** Harder to "fork" or move compared to a single file.
-
-- **Cloudflare D1**
-  - **Pros (Synergy):**
-    - **Distributed:** Native replication across Cloudflare's global network.
-    - **Integration:** Zero-config bindings for Workers.
-  - **Cons (Trade-offs):**
-    - **Lock-in:** Tightly coupled to the Cloudflare ecosystem.
-    - **Immalleability:** Harder to export/move freely compared to raw SQLite.
+    - **Bottleneck:** A single massive FTS index will choke on updates as the
+      platform grows.
+    - **Lock-in:** Exporting a single world requires complex `SELECT ...` logic
+      rather than a simple file copy.
 
 ## Graph Engine
 
-- **Oxigraph (Wasm)**
+- **Oxigraph (Wasm) + Pre-loading**
   - **Pros (Synergy):**
-    - **Speed:** Near-native performance (Rust) for <50ms queries.
+    - **Speed:** Near-native performance (Rust).
     - **Compliance:** Full SPARQL 1.1 support.
+    - **Optimization:** Pre-loading the WASM module in the global scope (outside
+      request handlers) eliminates 90% of cold stat latency on Edge runtimes.
   - **Cons (Trade-offs):**
-    - **Overhead:** Wasm instantiation cost per request.
     - **Memory:** Higher footprint than simple JS object traversal.
+    - **Complexity:** Requires careful lifecycle management in serverless
+      environments to ensure the "warm" isolate is reused.
 
 - **Comunica + N3.js**
   - **Pros (Synergy):**
@@ -195,3 +195,35 @@ the following pairings:
     - **Build Step:** Requires bundling (e.g. `esbuild`) to target `workerd`;
       loses Deno's native zero-config deployment.
     - **Compatibility:** `workerd` != Deno; some APIs may differ.
+
+## Auth Provider Strategy
+
+- **WorkOS**
+  - **Pros (Synergy):**
+    - **Enterprise-Native:** Best-in-class for SSO and SCIM; prepares the app
+      for "high assurance" use cases immediately.
+    - **DX:** Modern, uncompromising API design.
+  - **Cons (Trade-offs):**
+    - **B2C Depth:** While capable, its DNA is heavily B2B compared to Clerk's
+      consumer focus.
+
+- **Auth0**
+  - **Pros (Synergy):**
+    - **Ubiquity:** The standard reference for identity; huge community support.
+    - **Flexibility:** "Actions" allow complex customization of the auth
+      pipeline.
+  - **Cons (Trade-offs):**
+    - **Legacy:** Can feel "enterprise-heavy" and complex to configure for
+      modern lightweight stacks.
+    - **Cost:** Price cliffs for enterprise features are steep.
+
+- **Clerk**
+  - **Pros (Synergy):**
+    - **Next.js Native:** Unbeatable integration with Next.js App Router and
+      React Server Components.
+    - **UI:** Drop-in components are premium and distinct, saving weeks of
+      frontend work.
+  - **Cons (Trade-offs):**
+    - **Lock-in:** Deep coupling with their specific React component ecosystem.
+    - **Middleware:** Heavy reliance on Middleware can sometimes complicate Edge
+      layouts.

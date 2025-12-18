@@ -67,28 +67,27 @@ We adhere to core philosophical pillars to guide every technical decision:
 - **Malleable Knowledge:** Data is not static. "Worlds" are designed to be
   forked, merged, and mutated by agents in real-time.
 - **Agent Autonomy:** AI agents need agency to be truly effective. Success
-  depends on a human-centric approach: we must move beyond simply providing
-  tools and instead focus on "training" the AI to use them, much as we would a
-  human teammate. Also, knowing when to escalate a clarification/disambiguation
-  request to a human is as unique (personalized) to the use case as it is
-  critical.
+  depends on a human-centric, empathetic approach: we must move beyond simply
+  providing tools and instead focus on "training" the AI to use them, much as we
+  would a human teammate. Also, knowing when to escalate a
+  clarification/disambiguation request to a human operator is as unique
+  (personalized) to the use case as it is critical. AI tools are like skills or
+  senses that allow the agent to perceive, feel, and interface with their world.
 - **Web Standards:** A space where users maintain their autonomy, control their
   data and privacy, and choose applications and services to fulfil their needs.
 
 ## Glossary
 
-| Term             | Definition                                                                                                   |
-| :--------------- | :----------------------------------------------------------------------------------------------------------- |
-| **World**        | An isolated Knowledge Graph instance (RDF Dataset), acting as a memory store for an agent.                   |
-| **Statement**    | An atomic unit of fact (Quad: Subject, Predicate, Object, Graph).                                            |
-| **Chunk**        | A text segment derived from a Statement's Object (string literal), treating the Statement as a RAG document. |
-| **RRF**          | **Reciprocal Rank Fusion**. An algorithm fusing Keyword (FTS) and Vector search rankings.                    |
-| **RDF**          | **Resource Description Framework**. The W3C standard for graph data interchange.                             |
-| **SPARQL**       | The W3C standard query language for RDF graphs.                                                              |
-| **NamedNode**    | A node in an RDF graph that has a URI.                                                                       |
-| **BlankNode**    | A node in an RDF graph that does not have a URI.                                                             |
-| **Literal**      | A node in an RDF graph that is a literal.                                                                    |
-| **DefaultGraph** | A node in an RDF graph that is the default graph.                                                            |
+| Term          | Definition                                                                                                   |
+| :------------ | :----------------------------------------------------------------------------------------------------------- |
+| **World**     | An isolated Knowledge Graph instance (RDF Dataset), acting as a memory store for an agent.                   |
+| **Statement** | An atomic unit of fact (Quad: Subject, Predicate, Object, Graph).                                            |
+| **Chunk**     | A text segment derived from a Statement's Object (string literal), treating the Statement as a RAG document. |
+| **RRF**       | **Reciprocal Rank Fusion**. An algorithm fusing Keyword (FTS) and Vector search rankings.                    |
+| **RDF**       | **Resource Description Framework**. The W3C standard for graph data interchange.                             |
+| **SPARQL**    | The W3C standard query language for RDF graphs.                                                              |
+| **NamedNode** | A node in an RDF graph that has a URI.                                                                       |
+| **BlankNode** | A node in an RDF graph that does not have a URI.                                                             |
 
 ## System Architecture
 
@@ -325,6 +324,9 @@ a **Pluggable Storage Architecture** to accommodate our research findings.
 - **Type:** In-Memory Native RDF Store (Wasm).
 - **Role:** Query Engine & Cache.
 - **Persistence Strategy:**
+  - **Pre-loading:** The heavy Wasm module and TF USE models are pre-loaded in
+    the global scope (outside the request handler) to ensure the isolate is
+    "warm" for incoming requests.
   - **Cold Start:** Hydrates graph state from the `kb_statements` SQLite table
     upon initialization.
   - **Warm State:** Persists in the Deno
@@ -338,12 +340,24 @@ a **Pluggable Storage Architecture** to accommodate our research findings.
 - **Cons:** Purely symbolic (exact match only); requires re-hydration on cold
   starts.
 
-### Integrated Engine: Statements & Chunks Hybrid
+### Integrated Engine: Per-World Hybrid SQLite
 
-We utilize a **Hybrid Store** as the backing layer for "World Models." This
-engine fundamentally stores **RDF Statements (Quads)** in SQLite, where text
-**Chunks** are generated from and linked to these statements to enable Semantic
-Search.
+We utilize a **Per-World Database Strategy** to maximize isolation and
+performance.
+
+- **Architecture:**
+  - **Control Plane DB (`sys.db`):** Manage accounts, billing, and maps
+    `world_id` -> Database URI.
+  - **Data Plane DBs (`world_*.db`):** Each "World" is an isolated SQLite file
+    containing its own `kb_statements` and `kb_chunks` tables.
+
+- **Value Proposition:**
+  - **Detachable:** "Detaching" a hippocampus is as simple as copying the
+    `world_123.sqlite` file.
+  - **Performance:** Bulk write operations (ingestion) lock only the specific
+    world's file, preventing platform-wide contention.
+  - **search:** FTS indices are kept small and relevant to the specific agent
+    context.
 
 - **Schema Design:**
 
@@ -360,11 +374,6 @@ Search.
   - **Integration:** This metadata is exposed via the **Worlds API SDK**,
     enabling frontend applications (like the official Dashboard) to allow users
     to manually update world names and descriptions.
-
-- **Value Proposition:** This allows agents to query via standard SPARQL _AND_
-  natural language keywords (e.g., "Find concepts related to 'cybernetics'").
-  The `kb_chunks` table enables **Reciprocal Rank Fusion (RRF)**, combining
-  results from `fts5` keyword matches and vector semantic similarity.
 
 ### Blank Node Strategy
 
@@ -417,7 +426,7 @@ Edge.
 ## Design Alternatives
 
 For a detailed breakdown of our architectural decisions (Database, Graph Engine,
-Runtime, Deployment), please see [ADR.md](./ADR.md).
+Runtime, Deployment, Authentication), please see [ADR.md](./ADR.md).
 
 ## API Specification
 
