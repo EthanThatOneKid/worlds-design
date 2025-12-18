@@ -5,11 +5,9 @@
 | **Author**       | Ethan (Founder, FartLabs)                       |
 | **Repository**   | `github.com/EthanThatOneKid/worlds-api`         |
 
-> When I invented the World Wide Web, I envisioned technology that would empower
-> people and enable collaboration. Somewhere along the way, we lost that
-> human-first approach; today’s web often prioritises profits over people. Solid
-> returns the web to its roots by giving everyone direct control over their own
-> data.
+> The Semantic Web is not a separate Web but an extension of the current one, in
+> which information is given well-defined meaning, better enabling computers and
+> people to work in cooperation.
 >
 > – Sir Tim Berners-Lee
 
