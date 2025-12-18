@@ -298,6 +298,59 @@ users to authenticate, view, and manage their "world models."
 - **Design System:** Uses Tailwind CSS with a minimalist, "Vercel-native"
   aesthetic (implicit dark mode support).
 
+### Interface & Capabilities
+
+The dashboard is organized into a hierarchy of pages designed to move from
+high-level account management to granular graph inspection.
+
+#### 1. Overview (`/overview`)
+
+The initial landing page providing a high-level summary of the user's account.
+
+- **Usage Metrics:** Aggregate visualization of API calls, storage usage, and
+  active agents across all projects.
+- **Recent Activity:** A timeline of recent world creations, deletions, or
+  significant modifications.
+
+#### 2. Settings (`/settings`)
+
+Global configuration for the user's account.
+
+- **Account Management:** User profile and organizational settings.
+- **Global API Keys:** Management of admin-level keys (if applicable) or
+  personal access tokens.
+- **Billing:** Invoice history, payment methods, and plan upgrades.
+
+#### 3. Worlds (`/worlds`)
+
+The central inventory of all Worlds owned by the account.
+
+- **World Grid:** A card-based layout displaying all worlds with status
+  indicators (Active, Hidden, Recently Deleted).
+- **Create World:** Workflow to initialize a new empty World or fork an existing
+  one.
+- **Search & Filter:** Tools to quickly locate worlds by name or ID.
+
+#### 4. World Details (`/worlds/{world_id}`)
+
+The main workspace for a specific World. This page serves as the "IDE" for the
+data.
+
+- **Graph Playground:** An interactive SPARQL editor and "Natural Language
+  Tester" to experiment with `recall` and `remember` capabilities.
+- **Data Explorer:** Visual tools to browse statements and chunks stored in the
+  world.
+- **Connection Info:** Quick access to the `world_id` and specific endpoints for
+  SDK usage.
+
+#### 5. World Settings (`/worlds/{world_id}/settings`)
+
+Configuration specific to a single World.
+
+- **General:** Rename the world or update its description.
+- **Access Keys:** Manage API keys scoped specifically to this world.
+- **Danger Zone:** Delete the world or reset its knowledge graph.
+
 ### Design Story & Motivations
 
 - **Separation of Concerns:** The project delegates core business logic to an
@@ -311,6 +364,10 @@ users to authenticate, view, and manage their "world models."
 - **Account Mapping:** There is a deliberate design pattern to map generic
   WorkOS users to specific "Worlds Accounts" using the WorkOS user ID, ensuring
   a seamless bridge between identity and domain-specific data.
+- **Unified Visual Identity:** The frontend aims to harbor attention and gain
+  trust through a "million dollar" landing page design and a cohesive design
+  system. This ensures continuity by sharing design language and tokens between
+  the public marketing site and the authenticated dashboard UI.
 
 The architecture emphasizes security and simplicity by offloading complex auth
 and backend communications, resulting in a cleaner, lightweight frontend
@@ -707,8 +764,8 @@ without requiring a full reload from SQLite.
 We aim to implement a robust, asynchronous metering system to support
 "Pay-as-you-go" pricing and prevent abuse. Usage will be metered by **Service
 Account (API Key)** and aggregated into time buckets (e.g., 1-minute intervals)
-in a high-throughput key-value store (e.g., Redis or Deno KV) before being
-flushed to permanent storage.
+in a high-throughput key-value store (e.g., Deno KV) before being flushed to
+permanent storage.
 
 ```ts
 export interface WorldUsageBucket {
@@ -749,3 +806,7 @@ This will ensure:
 - **Reciprocal Rank Fusion:**
   [Paper (Cormack et al.)](https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf) -
   The ranking logic used for Hybrid Search.
+
+---
+
+Developed with 🧪 [**@FartLabs**](https://github.com/FartLabs)
