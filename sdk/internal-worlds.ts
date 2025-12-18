@@ -1,4 +1,9 @@
-import { WorldMetadata, WorldsAccount } from "./types/mod.ts";
+import {
+  Limit,
+  UsageBucket,
+  WorldMetadata,
+  WorldsAccount,
+} from "./types/mod.ts";
 import { Worlds, WorldsOptions } from "./worlds.ts";
 
 /**
@@ -14,7 +19,8 @@ export class InternalWorlds extends Worlds {
    * createAccount creates a new account in the Worlds API.
    */
   public async createAccount(account: WorldsAccount): Promise<WorldsAccount> {
-    const response = await fetch(`${this.options.baseUrl}/accounts`, {
+    const url = new URL(`${this.options.baseUrl}/accounts`);
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${this.options.apiKey}`,
@@ -33,8 +39,9 @@ export class InternalWorlds extends Worlds {
    * getAccount retrieves an account from the Worlds API.
    */
   public async getAccount(accountId: string): Promise<WorldsAccount | null> {
+    const url = new URL(`${this.options.baseUrl}/accounts/${accountId}`);
     const response = await fetch(
-      `${this.options.baseUrl}/accounts/${accountId}`,
+      url,
       {
         method: "GET",
         headers: {
@@ -58,8 +65,9 @@ export class InternalWorlds extends Worlds {
    * updateAccount updates an existing account in the Worlds API.
    */
   public async updateAccount(account: WorldsAccount): Promise<void> {
+    const url = new URL(`${this.options.baseUrl}/accounts/${account.id}`);
     const response = await fetch(
-      `${this.options.baseUrl}/accounts/${account.id}`,
+      url,
       {
         method: "PUT",
         headers: {
@@ -78,8 +86,9 @@ export class InternalWorlds extends Worlds {
    * removeAccount removes an account from the Worlds API.
    */
   public async removeAccount(accountId: string): Promise<void> {
+    const url = new URL(`${this.options.baseUrl}/accounts/${accountId}`);
     const response = await fetch(
-      `${this.options.baseUrl}/accounts/${accountId}`,
+      url,
       {
         method: "DELETE",
         headers: {
@@ -99,8 +108,11 @@ export class InternalWorlds extends Worlds {
   public async getWorldsByAccount(
     accountId: string,
   ): Promise<WorldMetadata[]> {
-    const response = await fetch(
+    const url = new URL(
       `${this.options.baseUrl}/accounts/${accountId}/worlds`,
+    );
+    const response = await fetch(
+      url,
       {
         headers: {
           Authorization: `Bearer ${this.options.apiKey}`,
@@ -119,7 +131,8 @@ export class InternalWorlds extends Worlds {
    * This is an admin-only operation.
    */
   public async listAccounts(): Promise<WorldsAccount[]> {
-    const response = await fetch(`${this.options.baseUrl}/accounts`, {
+    const url = new URL(`${this.options.baseUrl}/accounts`);
+    const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${this.options.apiKey}`,
       },
@@ -134,8 +147,11 @@ export class InternalWorlds extends Worlds {
    * rotateAccountKey rotates the API key for an account.
    */
   public async rotateAccountKey(accountId: string): Promise<WorldsAccount> {
-    const response = await fetch(
+    const url = new URL(
       `${this.options.baseUrl}/accounts/${accountId}/rotate`,
+    );
+    const response = await fetch(
+      url,
       {
         method: "POST",
         headers: {
@@ -148,5 +164,68 @@ export class InternalWorlds extends Worlds {
     }
 
     return await response.json();
+  }
+  /**
+   * getUsage retrieves the usage buckets for an account.
+   */
+  public async getUsage(accountId: string): Promise<UsageBucket[]> {
+    const url = new URL(`${this.options.baseUrl}/usage/${accountId}`);
+    const response = await fetch(
+      url,
+      {
+        headers: {
+          Authorization: `Bearer ${this.options.apiKey}`,
+        },
+      },
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * getLimits retrieves the limits for a plan.
+   */
+  public async getLimits(plan: string): Promise<Limit | null> {
+    const url = new URL(`${this.options.baseUrl}/limits/${plan}`);
+    const response = await fetch(
+      url,
+      {
+        headers: {
+          Authorization: `Bearer ${this.options.apiKey}`,
+        },
+      },
+    );
+    if (response.status === 404) {
+      return null;
+    }
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * setLimits sets the limits for a plan.
+   */
+  public async setLimits(limit: Limit): Promise<void> {
+    const url = new URL(`${this.options.baseUrl}/limits/${limit.plan}`);
+    const response = await fetch(
+      url,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${this.options.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(limit),
+      },
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
   }
 }

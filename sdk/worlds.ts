@@ -20,7 +20,8 @@ export class Worlds {
    * getWorlds gets all worlds from the Worlds API.
    */
   public async getWorlds(): Promise<WorldMetadata[]> {
-    const response = await fetch(`${this.options.baseUrl}/worlds`, {
+    const url = new URL(`${this.options.baseUrl}/worlds`);
+    const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${this.options.apiKey}`,
       },
@@ -39,8 +40,9 @@ export class Worlds {
     worldId: string,
     encoding: string,
   ): Promise<string | null> {
+    const url = new URL(`${this.options.baseUrl}/worlds/${worldId}`);
     const response = await fetch(
-      `${this.options.baseUrl}/worlds/${worldId}`,
+      url,
       {
         headers: {
           Authorization: `Bearer ${this.options.apiKey}`,
@@ -67,8 +69,9 @@ export class Worlds {
     world: string,
     encoding: string,
   ): Promise<void> {
+    const url = new URL(`${this.options.baseUrl}/worlds/${worldId}`);
     const response = await fetch(
-      `${this.options.baseUrl}/worlds/${worldId}`,
+      url,
       {
         method: "PUT",
         headers: {
@@ -91,8 +94,9 @@ export class Worlds {
     data: string,
     encoding: string,
   ): Promise<void> {
+    const url = new URL(`${this.options.baseUrl}/worlds/${worldId}`);
     const response = await fetch(
-      `${this.options.baseUrl}/worlds/${worldId}`,
+      url,
       {
         method: "POST",
         headers: {
@@ -111,8 +115,9 @@ export class Worlds {
    * removeWorld removes a world from the Worlds API.
    */
   public async removeWorld(worldId: string): Promise<void> {
+    const url = new URL(`${this.options.baseUrl}/worlds/${worldId}`);
     const response = await fetch(
-      `${this.options.baseUrl}/worlds/${worldId}`,
+      url,
       {
         method: "DELETE",
         headers: {
@@ -134,8 +139,11 @@ export class Worlds {
     query: string,
     // deno-lint-ignore no-explicit-any
   ): Promise<any> {
-    const response = await fetch(
+    const url = new URL(
       `${this.options.baseUrl}/worlds/${worldId}/sparql`,
+    );
+    const response = await fetch(
+      url,
       {
         method: "POST",
         headers: {
@@ -161,8 +169,11 @@ export class Worlds {
     worldId: string,
     update: string,
   ): Promise<void> {
-    const response = await fetch(
+    const url = new URL(
       `${this.options.baseUrl}/worlds/${worldId}/sparql`,
+    );
+    const response = await fetch(
+      url,
       {
         method: "POST",
         headers: {
@@ -184,8 +195,9 @@ export class Worlds {
     worldId: string,
     metadata: WorldMetadata,
   ): Promise<void> {
+    const url = new URL(`${this.options.baseUrl}/worlds/${worldId}`);
     const response = await fetch(
-      `${this.options.baseUrl}/worlds/${worldId}`,
+      url,
       {
         method: "PATCH",
         headers: {
@@ -207,8 +219,11 @@ export class Worlds {
     worldId: string,
     statementId: number,
   ): Promise<Statement | null> {
-    const response = await fetch(
+    const url = new URL(
       `${this.options.baseUrl}/worlds/${worldId}/statements/${statementId}`,
+    );
+    const response = await fetch(
+      url,
       {
         headers: {
           Authorization: `Bearer ${this.options.apiKey}`,
@@ -232,15 +247,17 @@ export class Worlds {
     worldId: string,
     query: string,
   ): Promise<RankedResult<Statement>[]> {
-    const response = await fetch(
+    const url = new URL(
       `${this.options.baseUrl}/worlds/${worldId}/statements`,
+    );
+    url.searchParams.set("query", query);
+    const response = await fetch(
+      url,
       {
         method: "GET",
         headers: {
           Authorization: `Bearer ${this.options.apiKey}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ query }),
       },
     );
     if (!response.ok) {
@@ -256,8 +273,11 @@ export class Worlds {
     worldId: string,
     chunkId: number,
   ): Promise<Chunk | null> {
-    const response = await fetch(
+    const url = new URL(
       `${this.options.baseUrl}/worlds/${worldId}/chunks/${chunkId}`,
+    );
+    const response = await fetch(
+      url,
       {
         headers: {
           Authorization: `Bearer ${this.options.apiKey}`,
@@ -282,15 +302,17 @@ export class Worlds {
     worldId: string,
     query: string,
   ): Promise<RankedResult<Chunk>[]> {
-    const response = await fetch(
+    const url = new URL(
       `${this.options.baseUrl}/worlds/${worldId}/chunks`,
+    );
+    url.searchParams.set("query", query);
+    const response = await fetch(
+      url,
       {
         method: "GET",
         headers: {
           Authorization: `Bearer ${this.options.apiKey}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ query }),
       },
     );
 
