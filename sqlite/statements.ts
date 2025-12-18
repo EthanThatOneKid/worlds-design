@@ -2,7 +2,7 @@
  * StatementRow is a row in the statements table.
  */
 export interface StatementRow {
-  id: number;
+  statement_id: number;
   subject: string;
   predicate: string;
   object: string;

@@ -34,6 +34,17 @@ core philosophy.
     - **Lock-in:** Exporting a single world requires complex `SELECT ...` logic
       rather than a simple file copy.
 
+- **SurrealDB**
+  - **Pros (Synergy):**
+    - **Multi-Model:** Natively supports graph relationships alongside standard
+      document storage, aligning well with our "World" concept.
+    - **Scale:** Built for distributed scalability from the ground up.
+  - **Cons (Trade-offs):**
+    - **Operational Overhead:** Running a SurrealDB cluster (or paying for
+      cloud) adds infrastructure complexity compared to embedded SQLite.
+    - **Maturity:** Newer entrant compared to the battle-tested SQLite/Postgres
+      ecosystem.
+
 ## Graph Engine
 
 - **Oxigraph (Wasm) + Pre-loading**

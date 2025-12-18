@@ -1,9 +1,9 @@
-# Technical Design Document: Worlds API™ Platform
+# Worlds API™ Design Document
 
 | **Project Name** | Worlds API™ (Neuro-symbolic Knowledge Platform) |
 | ---------------- | ----------------------------------------------- |
-| **Author**       | Ethan (Founder, FartLabs)                       |
-| **Repository**   | `github.com/EthanThatOneKid/worlds-api`         |
+| **Author**       | Ethan (Founder, FartLabs/Wazoo)                 |
+| **Repository**   | <https://github.com/EthanThatOneKid/worlds-api> |
 
 > The Semantic Web is not a separate Web but an extension of the current one, in
 > which information is given well-defined meaning, better enabling computers and
@@ -30,7 +30,7 @@ brother of the person who invented X?").
 - **Unified Architecture:** We integrate a **Hybrid Statements Store** directly
   alongside the graph, capable of fusing SPARQL precision with Vector and
   Full-Text Search (FTS) with Reciprocal Rank Fusion (RRF) for comprehensive
-  World Models.
+  [world models](https://www.nvidia.com/en-us/glossary/world-models/).
 
 ### Scope
 
@@ -39,9 +39,7 @@ brother of the person who invented X?").
     billing, and API keys.
   - **Data Plane (API):** Deno-based REST API handling SPARQL query execution,
     triple storage, and chunk storage.
-  - **SDK:** TypeScript client for agent integration. (`@fartlabs/worlds`; name
-    TBD, might claim a new org on JSR if needed e.g., `@wazoo/worlds`,
-    `@worlds/sdk`).
+  - **SDK:** TypeScript client for agent integration. (`@fartlabs/worlds`).
   - **Tools:** A collection of drop-in AISDK tools for managing Worlds.
   - **Authentication:** Dual-strategy service accounts (WorkOS for humans, API
     Keys for automations/agents).
@@ -49,7 +47,8 @@ brother of the person who invented X?").
     applications.
 
 - **Out of Scope:**
-  - The implementation of the AI Agents themselves.
+  - The implementation of the AI Agents themselves. To be used in future
+    FartLabs/Wazoo projects such as Computer, Holosuite, and more.
   - Visual Graph Editors (v1 is code-first).
 
 ## Project Philosophy
@@ -66,28 +65,27 @@ We adhere to core philosophical pillars to guide every technical decision:
   Workers).
 - **Malleable Knowledge:** Data is not static. "Worlds" are designed to be
   forked, merged, and mutated by agents in real-time.
-- **Agent Autonomy:** AI agents need agency to be truly effective. Success
-  depends on a human-centric, empathetic approach: we must move beyond simply
-  providing tools and instead focus on "training" the AI to use them, much as we
-  would a human teammate. Also, knowing when to escalate a
-  clarification/disambiguation request to a human operator is as unique
-  (personalized) to the use case as it is critical. AI tools are like skills or
-  senses that allow the agent to perceive, feel, and interface with their world.
+- **Agent Autonomy:** True agency requires more than tooling—it requires
+  onboarding agents as teammates. Our human-centric framework equips agents with
+  "senses" to perceive their world and the judgment to know when to escalate
+  ambiguity to human operators.
 - **Web Standards:** A space where users maintain their autonomy, control their
   data and privacy, and choose applications and services to fulfil their needs.
 
 ## Glossary
 
-| Term          | Definition                                                                                                   |
-| :------------ | :----------------------------------------------------------------------------------------------------------- |
-| **World**     | An isolated Knowledge Graph instance (RDF Dataset), acting as a memory store for an agent.                   |
-| **Statement** | An atomic unit of fact (Quad: Subject, Predicate, Object, Graph).                                            |
-| **Chunk**     | A text segment derived from a Statement's Object (string literal), treating the Statement as a RAG document. |
-| **RRF**       | **Reciprocal Rank Fusion**. An algorithm fusing Keyword (FTS) and Vector search rankings.                    |
-| **RDF**       | **Resource Description Framework**. The W3C standard for graph data interchange.                             |
-| **SPARQL**    | The W3C standard query language for RDF graphs.                                                              |
-| **NamedNode** | A node in an RDF graph that has a URI.                                                                       |
-| **BlankNode** | A node in an RDF graph that does not have a URI.                                                             |
+| Term                  | Definition                                                                                                   |
+| :-------------------- | :----------------------------------------------------------------------------------------------------------- |
+| **World**             | An isolated Knowledge Graph instance (RDF Dataset), acting as a memory store for an agent.                   |
+| **Statement**         | An atomic unit of fact (Quad: Subject, Predicate, Object, Graph).                                            |
+| **Chunk**             | A text segment derived from a Statement's Object (string literal), treating the Statement as a RAG document. |
+| **RRF**               | **Reciprocal Rank Fusion**. An algorithm fusing Keyword (FTS) and Vector search rankings.                    |
+| **RDF**               | **Resource Description Framework**. The W3C standard for graph data interchange.                             |
+| **SPARQL**            | The W3C standard query language for RDF graphs.                                                              |
+| **NamedNode**         | A node in an RDF graph that has a URI.                                                                       |
+| **BlankNode**         | A node in an RDF graph that does not have a URI.                                                             |
+| **Neuro-symbolic AI** | An AI system that combines the strengths of neural networks and structured data.                             |
+| **Ontology**          | A formal description of a domain of knowledge.                                                               |
 
 ## System Architecture
 
@@ -111,12 +109,12 @@ graph TD
     subgraph "Backend Layer (Deno Deploy / Edge)"
         API[Worlds API Server]
         Guard[Auth Middleware]
-        Router[Oak/Hono Router]
+        Router[Rt Router]
     end
 
     subgraph "Storage Layer"
         Oxi[Oxigraph Store (In-Memory/File)]
-        Global[Statements & Chunks Store]
+        SQLite[Per-World SQLite DBs]
     end
 
     Dev -->|HTTPS / UI| Next
@@ -126,7 +124,7 @@ graph TD
     Agent -->|HTTPS / SDK| API
     API -->|Validate Key| Guard
     API -->|SPARQL Query| Oxi
-    API -->|Hybrid Query| Global
+    API -->|Hybrid Query| SQLite
 ```
 
 ### Component Breakdown
@@ -136,14 +134,17 @@ Libraries as co-located packages.
 
 #### **A. The SDK (`/src/sdk`)**
 
-- **Package:** [`@fartlabs/worlds`](https://jsr.io/@fartlabs/worlds)
-- **Role:** The canonical TypeScript client. It handles authentication,
+[![JSR](https://jsr.io/badges/@fartlabs/worlds)](https://jsr.io/@fartlabs/worlds)
+[![JSR score](https://jsr.io/badges/@fartlabs/worlds/score)](https://jsr.io/@fartlabs/worlds/score)
+
+- **Package:** [`@fartlabs/worlds`](https://jsr.io/@fartlabs/worlds) (name TBD,
+  might claim a new org on JSR if needed e.g., `@wazoo/worlds`, `@worlds/sdk`)
+- **Role:** The canonical TypeScript `fetch` client. It handles authentication,
   type-safe API requests, and response parsing. It also provides drop-in AISDK
   memory tools for managing Worlds.
 - **Distribution:** Published to JSR. Use with Node.js:
   `npx jsr add @fartlabs/worlds`.
-- **Reference Design:** See [`sdk.ts`](./sdk.ts) for the proposed SDK
-  implementation.
+- **Reference Design:** See [`sdk`](./sdk) for the proposed SDK implementation.
 
 #### **B. The Server (`/src/server`)**
 
@@ -182,7 +183,7 @@ and Server to evolve together while sharing Types.
 ### Storage Interfaces
 
 We define distinct interfaces for the **Statements Store** (for RRF Search). See
-[statements.ts](statements.ts).
+[statements.ts](sqlite/statements.ts).
 
 ### RDF Ecosystem Compatibility
 
@@ -200,7 +201,7 @@ This enables developers to seamlessly leverage RDFJS libraries such as:
 
 ```ts
 import type { Quad } from "@rdfjs/types";
-import type { StatementRow } from "./store/statements.ts";
+import type { StatementRow } from "./sqlite/statements.ts";
 
 /**
  * toQuad converts an internal StatementRow to an RDFJS Quad.
@@ -229,12 +230,12 @@ their "World" using natural language tool calls.
 - **remember:** **Ingestion.** Stores facts or unstructured text into the World.
   - Parses input text.
   - Extracts RDF statements (via LLM or deterministic rules).
-  - Skolemizes Blank Nodes.
+  - Skolemizes Blank Nodes (application-level).
   - Writes to `kb_statements` and `kb_chunks`.
 - **recall:** **Retrieval.** Searches the World for relevant context.
   - Performs **Hybrid Search** (RRF of Vector + FTS).
   - Optionally executes SPARQL for structured queries.
-  - Returns ranked `RankedResult<StatementRow>[]`.
+  - Returns ranked `RankedResult<Statement>[]`.
 - **forget:** **Deletion.** Removes specific knowledge.
   - Accepts Statement IDs or Natural Language descriptions (resolved to IDs).
   - Triggers Recursive Cascading Deletes for dependent Blank Nodes.
@@ -270,8 +271,9 @@ const { text } = await generateText({
 
 - [Supermemory memory tools](https://supermemory.ai/docs/ai-sdk/memory-tools)
 - [Letta (MemGPT) memory tools](https://docs.letta.com/guides/agents/base-tools)
-- [Anthropic memory tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool)
 - [Gemini CLI memory tool](https://geminicli.com/docs/tools/memory/)
+- [Anthropic memory tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool)
+- [Claude-Mem Claude Code plugin](https://docs.claude-mem.ai/architecture/overview)
 
 ## Web Application: The Dashboard
 
@@ -340,6 +342,16 @@ a **Pluggable Storage Architecture** to accommodate our research findings.
 - **Cons:** Purely symbolic (exact match only); requires re-hydration on cold
   starts.
 
+#### Benchmarks
+
+| Benchmark                | Time/Iter (Avg) | Iter/s      |
+| :----------------------- | :-------------- | :---------- |
+| **encodeStore (nq)**     | **2.9 µs**      | **345,100** |
+| **encodeStore (trig)**   | **3.1 µs**      | **318,700** |
+| **encodeStore (jsonld)** | **4.6 µs**      | **219,400** |
+
+_(Benchmarks run on Deno 2.5.6, Intel i7-1280P)_
+
 ### Integrated Engine: Per-World Hybrid SQLite
 
 We utilize a **Per-World Database Strategy** to maximize isolation and
@@ -362,8 +374,8 @@ performance.
 - **Schema Design:**
 
 > [!NOTE]
-> See [schema.sql](./schema.sql) for the complete database schema including
-> `kb_worlds`, `kb_chunks`, and `kb_statements` tables.
+> See [schema.sql](./sqlite/schema.sql) for the complete database schema
+> including `kb_worlds`, `kb_chunks`, and `kb_statements` tables.
 
 - **World Metadata (`kb_worlds`):**
   - Stores high-level attributes: Name, Description, Owner (`account_id`), and
@@ -400,29 +412,6 @@ a **Skolemization** strategy paired with **Recursive Cascading Deletes**.
     This logic is enforced at the Application Layer (or via recursive SQL
     triggers where supported).
 
-## Observability & Metering
-
-To support scalable "Pay-as-you-go" pricing and prevent abuse, the platform
-tracks granular usage metrics directly within the World's SQLite database.
-
-### Usage Schema
-
-Usage is metered by **Service Account (API Key)** and aggregated into time
-buckets (e.g., 1-minute intervals). This ensures that:
-
-- **Billing is Transparent:** Users can see exactly which key incurred costs.
-- **Resource Control:** Granular limits can be applied to specific agents.
-- **Self-Containment:** Usage data travels with the World if it is migrated.
-
-(See `kb_usage` table in [schema.sql](./schema.sql))
-
-### Quotas & Limits
-
-Limits are stored alongside usage to enable decentralized enforcement at the
-Edge.
-
-(See `kb_limits` table in [schema.sql](./schema.sql))
-
 ## Design Alternatives
 
 For a detailed breakdown of our architectural decisions (Database, Graph Engine,
@@ -439,15 +428,163 @@ The API is a RESTful HTTP server programmed in (Deno) TypeScript.
   cross-contamination between agents and enable data security features like
   "Hidden Worlds" and "Recently Deleted Worlds".
 
-### Core Endpoints
+### Control Plane Endpoints (Internal)
 
-| Method   | Path                       | Purpose                    | Request                                                          | Response                                      |
-| -------- | -------------------------- | -------------------------- | ---------------------------------------------------------------- | --------------------------------------------- |
-| `GET`    | `/v1/worlds/:world`        | Get a World.               | -                                                                | `200 OK`<br>`application/n-quads`             |
-| `PUT`    | `/v1/worlds/:world`        | Create or replace a World. | `Content-Type: application/n-quads`<br>Raw RDF body.             | `204 No Content`                              |
-| `POST`   | `/v1/worlds/:world`        | Ingest (Append) knowledge. | `Content-Type: application/n-quads`<br>Raw RDF body.             | `204 No Content`                              |
-| `POST`   | `/v1/worlds/:world/sparql` | Reasoning/Retrieval.       | `Content-Type: application/sparql-query`<br>SPARQL Query string. | `200 OK`<br>`application/sparql-results+json` |
-| `DELETE` | `/v1/worlds/:world`        | Wipe memory.               | -                                                                | `204 No Content`                              |
+These endpoints are used for account management and are typically restricted to
+admin or service-owner contexts.
+
+#### `POST /v1/accounts`
+
+Create a new account.
+
+- **Request:** JSON body `{ id, apiKey, description, plan, accessControl }`.
+- **Response:** `200 OK` → `WorldsAccount`
+
+#### `GET /v1/accounts`
+
+List all accounts.
+
+- **Request:** Empty body.
+- **Response:** `200 OK` → `WorldsAccount[]`
+
+#### `GET /v1/accounts/:account`
+
+Get a specific account.
+
+- **Request:** Empty body.
+- **Response:** `200 OK` → `WorldsAccount`
+
+#### `PUT /v1/accounts/:account`
+
+Update an account.
+
+- **Request:** JSON body `{ id, apiKey, description, plan, accessControl }`.
+- **Response:** `204 No Content`
+
+#### `DELETE /v1/accounts/:account`
+
+Remove an account.
+
+- **Request:** Empty body.
+- **Response:** `204 No Content`
+
+#### `GET /v1/accounts/:account/worlds`
+
+Get worlds owned by a specific account.
+
+- **Request:** Empty body.
+- **Response:** `200 OK` → `WorldMetadata[]`
+
+#### `POST /v1/accounts/:account/rotate`
+
+Rotate the API key for an account.
+
+- **Request:** Empty body.
+- **Response:** `200 OK` → `WorldsAccount` (with new apiKey)
+
+### Control Plane Endpoints (Public)
+
+#### `GET /v1/worlds`
+
+Get all Worlds owned by the user.
+
+- **Purpose:** Retrieve all Worlds owned by the user.
+- **Request:** Empty body.
+- **Response:** `200 OK` → `WorldMetadata[]`
+
+#### `GET /v1/worlds/:world`
+
+Get a specific World graph.
+
+- **Purpose:** Retrieve the full knowledge graph.
+- **Request:** Empty body.
+- **Response:** `200 OK` (Content-Type: `application/n-quads`)
+
+#### `PUT /v1/worlds/:world`
+
+Create or completely replace a World.
+
+- **Purpose:** Overwrite the entire graph with new data.
+- **Request:** Raw RDF body (Content-Type: `application/n-quads`).
+- **Response:** `204 No Content`
+
+#### `PATCH /v1/worlds/:world`
+
+Update World metadata.
+
+- **Purpose:** Modify attributes like name or description.
+- **Request:** JSON body `{ name?, description? }` (Content-Type:
+  `application/json`).
+- **Response:** `204 No Content`
+
+#### `POST /v1/worlds/:world`
+
+Ingest (Append quads) knowledge to a World.
+
+- **Purpose:** Add new quads to the existing graph.
+- **Request:** Raw RDF body (Content-Type: `application/n-quads`).
+- **Response:** `204 No Content`
+
+#### `GET /v1/worlds/:world/sparql`
+
+SPARQL Reasoning & Retrieval (Read).
+
+- **Purpose:** Execute read-only SPARQL queries.
+- **Request:** Raw SPARQL query body (Content-Type: `application/sparql-query`).
+- **Response:** `200 OK` → `application/sparql-results+json`
+
+#### `POST /v1/worlds/:world/sparql`
+
+SPARQL Update (Write).
+
+- **Purpose:** Execute SPARQL update operations.
+- **Request:** Raw SPARQL Update body (Content-Type:
+  `application/sparql-update`).
+- **Response:** `200 OK` → `application/sparql-results+json`
+
+#### `DELETE /v1/worlds/:world`
+
+Wipe memory.
+
+- **Purpose:** Permanently delete the World and all associated data.
+- **Request:** Empty body.
+- **Response:** `204 No Content`
+
+#### `GET /v1/worlds/:world/statements`
+
+Search statements.
+
+- **Purpose:** Perform semantic retrieval and full-text search using Reciprocal
+  Rank Fusion (RRF).
+- **Request:** JSON parameters `{ query: string }` (Content-Type:
+  `application/json`).
+- **Response:** `200 OK` → `RankedResult<Statement>[]`
+
+#### `GET /v1/worlds/:world/statements/:statement`
+
+Get a specific statement.
+
+- **Purpose:** Retrieve a specific statement.
+- **Request:** Empty body.
+- **Response:** `200 OK` → `Statement`
+
+#### `GET /v1/worlds/:world/chunks`
+
+Search chunks.
+
+- **Purpose:** Perform semantic retrieval and full-text search using Reciprocal
+  Rank Fusion (RRF).
+- **Request:** JSON parameters `{ query: string }` (Content-Type:
+  `application/json`).
+- **Response:** `200 OK` → `RankedResult<Chunk>[]`
+
+#### `GET /v1/worlds/:world/chunks/:chunk`
+
+Get a specific chunk.
+
+- **Purpose:** Retrieve a specific chunk.
+- **Request:** Empty body.
+- **Response:** `200 OK` → `Chunk`
 
 ## Getting Started & Development
 
@@ -527,14 +664,6 @@ allows for real-time adjustments to service levels without code deployment:
 
 ## Future Work
 
-### Asynchronous Metering
-
-To eliminate the write-lock penalty on read operations, we plan to move the
-`kb_usage` metering to a high-throughput key-value store (e.g., Redis or Deno
-KV). Usage stats will be buffered in memory and flushed to the SQLite `kb_usage`
-table asynchronously in batches, decoupling strict persistence from request
-latency.
-
 ### Separated Vector Store
 
 As the Knowledge Graph grows, the presence of 512-dimension float vectors in the
@@ -572,6 +701,38 @@ re-hydration of the Graph Store. To mitigate this, we plan to implement a
 KV-backed message bus). This will allow "hot" Oxigraph isolates to receive
 granular RDF patches (deltas) from the writer, applying updates in-memory
 without requiring a full reload from SQLite.
+
+### Usage Monitoring & Limits
+
+We aim to implement a robust, asynchronous metering system to support
+"Pay-as-you-go" pricing and prevent abuse. Usage will be metered by **Service
+Account (API Key)** and aggregated into time buckets (e.g., 1-minute intervals)
+in a high-throughput key-value store (e.g., Redis or Deno KV) before being
+flushed to permanent storage.
+
+```ts
+export interface WorldUsageBucket {
+  bucket_start_ts: number;
+  account_id: string;
+  endpoint: string;
+  request_count: number;
+  cpu_time_ms: number;
+  tokens_in: number;
+  tokens_out: number;
+}
+```
+
+This will ensure:
+
+- **Billing Transparency:** Users can see exactly which key incurred costs.
+- **Resource Control:** Granular limits can be applied to specific agents.
+- **Zero Latency Impact:** Metering will not block the hot path of the API.
+
+### Research Papers
+
+- [Thinking with Knowledge Graphs (Arxiv)](https://arxiv.org/abs/2412.10654)
+- [Jelly: RDF Serialization Format (Arxiv)](https://arxiv.org/abs/2506.11298)
+- [MemGPT: Towards LLMs as Operating Systems (Arxiv)](https://arxiv.org/abs/2310.08560)
 
 ## Resources & References
 

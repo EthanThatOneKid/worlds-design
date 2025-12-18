@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS kb_chunks (
   statement_id INTEGER,
   content TEXT,
   embedding FLOAT32(512),
-  FOREIGN KEY(statement_id) REFERENCES kb_statements(id) ON DELETE CASCADE
+  FOREIGN KEY(statement_id) REFERENCES kb_statements(statement_id) ON DELETE CASCADE
 );
 
 -- Vector Index
@@ -57,7 +57,7 @@ END;
 -- The Core Triple Store (kb_statements)
 -- kb_statements: Knowledge Base Statements
 CREATE TABLE IF NOT EXISTS kb_statements (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  statement_id INTEGER PRIMARY KEY AUTOINCREMENT,
   subject TEXT NOT NULL,
   predicate TEXT NOT NULL,
   object TEXT NOT NULL,
@@ -71,7 +71,6 @@ CREATE TABLE IF NOT EXISTS kb_statements (
   object_datatype TEXT NOT NULL DEFAULT '',
   CONSTRAINT kb_statement_unique UNIQUE (
     subject, predicate, object, graph, term_type, object_language, object_datatype
-  )
   )
 );
 
@@ -99,28 +98,4 @@ CREATE INDEX IF NOT EXISTS kb_sp_index ON kb_statements (subject, predicate);
 -- kb_po_index: Knowledge Base Predicate-Object Index
 CREATE INDEX IF NOT EXISTS kb_po_index ON kb_statements (predicate, object);
 
--- Usage Metering
--- Tracks API usage per Service Account (API Key) on this World.
--- kb_usage: Knowledge Base Usage
-CREATE TABLE IF NOT EXISTS kb_usage (
-  bucket_start_ts INTEGER NOT NULL, -- Unix Timestamp (seconds)
-  account_id TEXT NOT NULL,         -- The Service Account ID
-  endpoint TEXT NOT NULL,           -- e.g., "SPARQL_QUERY"
-  
-  -- Metrics
-  request_count INTEGER DEFAULT 0,
-  cpu_time_ms INTEGER DEFAULT 0,
-  tokens_in INTEGER DEFAULT 0,
-  tokens_out INTEGER DEFAULT 0,
-  
-  PRIMARY KEY (bucket_start_ts, account_id, endpoint)
-);
 
--- Limits & Quotas
--- kb_limits: Knowledge Base Limits
-CREATE TABLE IF NOT EXISTS kb_limits (
-  account_id TEXT PRIMARY KEY,
-  plan_tier TEXT DEFAULT 'free',
-  quota_reads_per_min INTEGER,
-  quota_writes_per_min INTEGER
-);
