@@ -385,8 +385,7 @@ admin or service-owner contexts.
 - `PUT /v1/worlds/:world` - Create or completely replace a World.
 - `PATCH /v1/worlds/:world` - Update World metadata.
 - `POST /v1/worlds/:world` - Ingest knowledge to a World.
-- `GET /v1/worlds/:world/sparql` - SPARQL Reasoning & Retrieval (Read).
-- `POST /v1/worlds/:world/sparql` - SPARQL Update (Write).
+- `POST /v1/worlds/:world/sparql` - SPARQL Query (Read) & Update (Write).
 - `DELETE /v1/worlds/:world` - Wipe memory.
 - `GET /v1/worlds/:world/statements` - Search statements via `?query=...` param.
 - `GET /v1/worlds/:world/chunks` - Search chunks via `?query=...` param.
