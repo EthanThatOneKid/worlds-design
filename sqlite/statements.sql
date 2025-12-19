@@ -1,18 +1,6 @@
--- Worlds Table
--- kb_worlds: Knowledge Base Worlds (Metadata)
-CREATE TABLE IF NOT EXISTS kb_worlds (
-  world_id TEXT PRIMARY KEY,
-  account_id TEXT NOT NULL,
-  name TEXT NOT NULL,
-  description TEXT,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL,
-  deleted_at INTEGER, -- Soft delete support
-  is_public INTEGER DEFAULT 0
-);
-
--- kb_w_account_idx: Knowledge Base Worlds Account Index
-CREATE INDEX IF NOT EXISTS kb_w_account_idx ON kb_worlds (account_id);
+-- World Database Schema (world_*.db)
+-- Isolated Data Plane for a single World.
+-- Contains the Knowledge Graph (Statements) and Vector Memory (Chunks).
 
 -- The Core Triple Store (kb_statements)
 -- kb_statements: Knowledge Base Statements
@@ -84,27 +72,6 @@ CREATE TRIGGER IF NOT EXISTS kb_chunks_au AFTER UPDATE ON kb_chunks BEGIN
   INSERT INTO kb_chunks_fts(rowid, content) VALUES (new.chunk_id, new.content);
 END;
 
--- Usage Monitoring
--- kb_usage: Knowledge Base Usage Buckets
-CREATE TABLE IF NOT EXISTS kb_usage (
-  bucket_start_ts INTEGER NOT NULL,
-  account_id TEXT NOT NULL,
-  endpoint TEXT NOT NULL,
-  request_count INTEGER DEFAULT 0,
-  token_in_count INTEGER DEFAULT 0,
-  token_out_count INTEGER DEFAULT 0,
-  PRIMARY KEY (bucket_start_ts, account_id, endpoint)
-);
-
--- Dynamic Access Control
--- kb_limits: Knowledge Base Limits
-CREATE TABLE IF NOT EXISTS kb_limits (
-  plan TEXT PRIMARY KEY, -- 'free', 'pro'
-  quota_requests_per_min INTEGER DEFAULT 60,
-  quota_storage_bytes INTEGER DEFAULT 104857600, -- 100MB
-  allow_reasoning INTEGER DEFAULT 0 -- Boolean
-);
-
 -- Indices
 -- kb_s_index: Knowledge Base Subject Index
 CREATE INDEX IF NOT EXISTS kb_s_index ON kb_statements (subject);
@@ -118,5 +85,3 @@ CREATE INDEX IF NOT EXISTS kb_g_index ON kb_statements (graph);
 CREATE INDEX IF NOT EXISTS kb_sp_index ON kb_statements (subject, predicate);
 -- kb_po_index: Knowledge Base Predicate-Object Index
 CREATE INDEX IF NOT EXISTS kb_po_index ON kb_statements (predicate, object);
-
-
