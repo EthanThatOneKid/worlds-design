@@ -282,7 +282,7 @@ users to authenticate, view, and manage their "world models."
 
 - **Authentication:** Built on WorkOS AuthKit (`@workos-inc/authkit-nextjs`) for
   handling sign-in, sign-up, and session management.
-- **Dashboard:** A protected `/dashboard` route where authenticated users can:
+- **Dashboard:** A protected dashboard routes where authenticated users can:
   - View owned worlds.
   - Edit world descriptions (via Server Actions).
   - Delete worlds.
@@ -306,11 +306,16 @@ The initial landing page providing a high-level summary of the user's account.
 
 #### Settings (`/settings`)
 
-Global configuration for the user's account, including API Keys and Billing.
+Global configuration for the user's account, including API Keys, Billing, and
+Danger Zone.
 
 #### Worlds (`/worlds`)
 
-The central inventory of all Worlds owned by the account.
+The central inventory of all Worlds owned by the account. A worlds grid
+([animated procedural planet](https://github.com/Deep-Fold/PixelPlanets)) where
+a user may navigate to a specific world.
+
+[![Clancy's Multiverse Simulator](https://github.com/user-attachments/assets/f12bb5e5-ac61-4b36-824d-c42a913044b2)](https://themidnightgospel.fandom.com/wiki/Multiverse_Simulator)
 
 #### World Details (`/worlds/{world_id}`)
 
