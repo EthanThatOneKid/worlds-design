@@ -79,36 +79,56 @@ The system follows a segregated Client-Server architecture designed for edge
 deployment.
 
 ```mermaid
-graph TD
-    subgraph "Clients"
-        Dev[Developer/Human]
-        Agent[AI Agent / Bot]
+graph LR
+    %% Styles
+    classDef actor fill:#f9f9f9,stroke:#333,stroke-width:2px;
+    classDef control fill:#000,stroke:#333,color:#fff;
+    classDef edge fill:#fff3e0,stroke:#f57c00,stroke-width:2px;
+    classDef store fill:#e1f5fe,stroke:#0277bd,stroke-width:2px;
+
+    subgraph Users ["End Users"]
+        direction TB
+        Dev([Developer / Human]):::actor
+        Agent([AI Agent / Bot]):::actor
     end
 
-    subgraph "Frontend Layer (Vercel)"
-        Next[Next.js Dashboard]
-        WorkOS[WorkOS Auth]
+    subgraph Control ["Control Plane (Frontend)"]
+        direction TB
+        Next[Next.js Dashboard]:::control
+        WorkOS[WorkOS Auth]:::control
     end
 
-    subgraph "Backend Layer (Deno Deploy / Edge)"
-        API[Worlds API Server]
-        Guard[Auth Middleware]
-        Router[Rt Router]
+    subgraph Edge ["Data Plane (Edge Server)"]
+        direction TB
+        API[Worlds API Server]:::edge
+        Guard{Auth Guard}:::edge
+        Oxi[("Oxigraph (Wasm)<br/><i>Hot Memory</i>")]:::edge
     end
 
-    subgraph "Storage Layer"
-        Oxi["Oxigraph Store (In-Memory/File)"]
-        SQLite["Per-World SQLite DBs"]
+    subgraph Storage ["Persistence Layer"]
+        direction TB
+        SysDB[("System DB<br/><i>(Global)</i>")]:::store
+        WorldDB[("Per-World DBs<br/><i>(Isolated)</i>")]:::store
     end
 
-    Dev -->|HTTPS / UI| Next
-    Next -->|OIDC| WorkOS
-    Next -->|Mgmt API| API
+    %% Human/Control Flow
+    Dev ==>|HTTPS| Next
+    Next -.->|OIDC| WorkOS
+    Next ==>|Mgmt API| API
+
+    %% Agent/Data Flow
+    Agent ==>|HTTPS / SDK| API
     
-    Agent -->|HTTPS / SDK| API
-    API -->|Validate Key| Guard
-    API -->|SPARQL Query| Oxi
-    API -->|Hybrid Query| SQLite
+    API --> Guard
+    Guard -->|Valid Key| Oxi
+    
+    %% Internal Processing
+    Oxi <==>|SPARQL Query| API
+    API <-->|RRF / Vector| WorldDB
+    
+    %% State Management
+    Oxi -.->|Hydrate / Flush| WorldDB
+    API -.->|Usage Metering| SysDB
 ```
 
 ### Component Breakdown
