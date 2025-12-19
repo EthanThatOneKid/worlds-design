@@ -308,10 +308,10 @@ data.
 
 Configuration specific to a single World.
 
-## AI SDK Tools Design
+## AISDK Tools Design
 
 To facilitate seamless integration with the
-[Vercel AI SDK](https://sdk.vercel.ai/docs), the `@fartlabs/worlds` package
+[Vercel AISDK](https://sdk.vercel.ai/docs), the `@fartlabs/worlds` package
 exports pre-configured **Tool Definitions**. These allow agents to interact with
 their "World" using natural language tool calls.
 
