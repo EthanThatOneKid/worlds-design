@@ -11,6 +11,10 @@
 >
 > – Sir Tim Berners-Lee
 
+> **⚠️ WIP Disclaimer:** This design document is a work in progress. While most
+> details are correct, please do not reference this document to build your own
+> implementation yet, as specifications may change.
+
 ## Executive Summary
 
 **Worlds API™** is an edge-compatible infrastructure layer designed to provide
